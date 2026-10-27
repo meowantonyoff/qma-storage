@@ -1,0 +1,35 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>QMA1:{"id":"boot","ok":false}</title>
+<script>
+(function () {
+  var KEY = "qma_settings_v1", PROTO = "qma1", PREFIX = "QMA1:", MAX = 3000;
+  var ls = null;
+  try { ls = window.localStorage; ls.setItem("__t", "1"); ls.removeItem("__t"); } catch (e) { ls = null; }
+
+  function say(o) { document.title = PREFIX + JSON.stringify(o); }
+
+  function handle() {
+    var p = location.hash.replace(/^#/, "").split(".");
+    if (p[0] !== PROTO) return;
+    var id = p[1] || "", op = p[2], val = p[3] || "";
+    if (!/^[A-Za-z0-9]{1,16}$/.test(id)) return;
+    if (!ls) return say({ id: id, ok: false, op: op, err: "nostorage" });
+    try {
+      if (op === "get") {
+        say({ id: id, ok: true, op: "get", value: ls.getItem(KEY) || "" });
+      } else if (op === "set") {
+        if (val.length > MAX || !/^[A-Za-z0-9_-]*$/.test(val)) return say({ id: id, ok: false, op: "set", err: "bad" });
+        ls.setItem(KEY, val);
+        say({ id: id, ok: true, op: "set" });
+      } else {
+        say({ id: id, ok: false, op: op, err: "op" });
+      }
+    } catch (e) { say({ id: id, ok: false, op: op, err: "exc" }); }
+  }
+
+  if (!location.hash) say({ id: "ready", ok: !!ls });
+  window.addEventListener("hashchange", handle);
+  handle();
+})();
+</script>
